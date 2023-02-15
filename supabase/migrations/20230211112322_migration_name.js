@@ -7,9 +7,31 @@
 
 exports.up = function (knex) {
   return knex.schema
+    .createTable("tenants", (table) => {
+      table.uuid("id").primary();
+      table.string("tenant_name", 40).notNullable();
+      table.string("tel_number", 24).notNullable();
+      table.uuid("customer_id");
+      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+    })
     .createTable("profiles", (table) => {
       table.uuid("id").references("id").inTable("auth.users").primary();
       table.string("name", 18).notNullable();
+      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+    })
+    .createTable("roles", (table) => {
+      table.uuid("id").primary();
+      table.string("name", 18).notNullable();
+      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+    })
+    .createTable("teams", (table) => {
+      table.uuid("id").primary();
+      table.uuid("teams").references("id").inTable("tenants").notNullable();
+      table.uuid("role_id").references("id").inTable("roles").notNullable();
+      table.uuid("profile_id").references("id").inTable("profiles").notNullable();
       table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
       table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
     })
@@ -23,16 +45,13 @@ exports.up = function (knex) {
       table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
     })
     .createTable("projects_profiles", (table) => {
-      table.uuid("id").notNullable.primary();
-      table.uuid("");
+      table.uuid("id").primary();
     })
     .createTable("lots", (table) => {
       table.uuid("id").primary();
       table.string("lot_number", 32).notNullable().unique();
       table.uuid("project_id", 35).references("id").inTable("projects");
-      table
-        .timestamp("production_date")
-        .defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+      table.timestamp("production_date").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
       table.string("standard_lot_number");
       table.uuid("profile_id").references("id").inTable("profiles");
       table.string("lot_objective", 256);
@@ -59,10 +78,7 @@ exports.up = function (knex) {
       table.uuid("id").primary();
       table.uuid("process_id", 35).references("id").inTable("processes");
       table.integer("operation_order").notNullable().checkPositive();
-      table
-        .uuid("operation_type_id")
-        .references("id")
-        .inTable("operation_types");
+      table.uuid("operation_type_id").references("id").inTable("operation_types");
       table.decimal("value", null);
       table.string("details", 256);
       table.uuid("processed_material").references("id").inTable("processes");
@@ -82,7 +98,11 @@ exports.down = function (knex) {
     .dropTable("processes")
     .dropTable("lots")
     .dropTable("projects")
-    .dropTable("profiles");
+    .dropTable("projects_profiles")
+    .dropTable("tenant_profiles")
+    .dropTable("roles")
+    .dropTable("profiles")
+    .dropTable("tenants");
 };
 
 /*
@@ -117,4 +137,17 @@ exports.down = function (knex) {
       table.string("test_method_id").references("id").inTable("test");
       table.timestamp("test_date").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
     });
+*/
+
+/*
+CREATE POLICY tenant_policy ON banks
+  FOR ALL -- CRUD 全てに適用
+  TO app  -- アプリケーションがDBに接続するときのユーザ(=ロール)が`app`
+  USING(tenant_id IN (
+    SELECT tenant_id
+    FROM teams
+    WHERE teams.user_id = current_setting('app.userID') AND teams.id = current_setting('app.teamsId')
+  ));
+基本は teamsに所属していて、かつtenantも同じものを取得する
+管理ユーザーは自動的に全teamsに管理権限で入れるようにテーブルにトリガーを仕掛ける
 */
