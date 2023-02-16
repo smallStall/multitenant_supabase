@@ -12,40 +12,23 @@ exports.up = function (knex) {
       table.string("tenant_name", 40).notNullable();
       table.string("tel_number", 24).notNullable();
       table.uuid("customer_id");
-      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+      basicDefault(table, knex);
     })
     .createTable("profiles", (table) => {
-      table.uuid("id").references("id").inTable("auth.users").primary();
-      table.string("name", 18).notNullable();
-      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-    })
-    .createTable("roles", (table) => {
       table.uuid("id").primary();
+      table.uuid("user_id").references("id").inTable("auth.users");
       table.string("name", 18).notNullable();
-      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-    })
-    .createTable("teams", (table) => {
-      table.uuid("id").primary();
-      table.uuid("teams").references("id").inTable("tenants").notNullable();
-      table.uuid("role_id").references("id").inTable("roles").notNullable();
-      table.uuid("profile_id").references("id").inTable("profiles").notNullable();
-      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+      table.enu("role", ["manager", "leader", "general", "beginer"]).defaultTo("beginer");
+      table.uuid("tenant_id").references("id").inTable("tenants");
+      basicDefault(table, knex);
     })
     .createTable("projects", (table) => {
       table.uuid("id").primary();
       table.string("project_name", 50).notNullable().unique();
       table.string("project_objective", 256);
       table.string("background", 512);
-      table.boolean("is_deleted").notNullable().defaultTo(false);
-      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-    })
-    .createTable("projects_profiles", (table) => {
-      table.uuid("id").primary();
+      table.uuid("tenant_id").references("id").inTable("tenants");
+      basicDefault(table, knex);
     })
     .createTable("lots", (table) => {
       table.uuid("id").primary();
@@ -53,12 +36,9 @@ exports.up = function (knex) {
       table.uuid("project_id", 35).references("id").inTable("projects");
       table.timestamp("production_date").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
       table.string("standard_lot_number");
-      table.uuid("profile_id").references("id").inTable("profiles");
       table.string("lot_objective", 256);
       table.string("details", 256);
-      table.boolean("is_deleted").notNullable().defaultTo(false);
-      table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
-      table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+      tenantDefault(table, knex);
     })
     .createTable("processes", (table) => {
       table.uuid("id").primary();
@@ -66,13 +46,13 @@ exports.up = function (knex) {
       table.integer("process_order").notNullable().checkPositive();
       table.string("process_name", 24);
       table.string("container", 24);
-      table.boolean("is_deleted").notNullable().defaultTo(false);
+      tenantDefault(table, knex);
     })
     .createTable("operation_types", (table) => {
       table.uuid("id").primary();
       table.string("operation_type_name", 12).notNullable().unique();
       table.string("details", 256);
-      table.boolean("is_deleted").notNullable().defaultTo(false);
+      tenantDefault(table, knex);
     })
     .createTable("operations", (table) => {
       table.uuid("id").primary();
@@ -82,8 +62,20 @@ exports.up = function (knex) {
       table.decimal("value", null);
       table.string("details", 256);
       table.uuid("processed_material").references("id").inTable("processes");
-      table.boolean("is_deleted").notNullable().defaultTo(false);
+      tenantDefault(table, knex);
     });
+};
+
+const basicDefault = (table, knex) => {
+  table.boolean("is_deleted").notNullable().defaultTo(false);
+  table.timestamp("created_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+  table.timestamp("updated_at").defaultTo(knex.raw("CURRENT_TIMESTAMP"));
+};
+
+const tenantDefault = (table, knex) => {
+  table.uuid("tenant_id").references("id").inTable("tenants");
+  table.uuid("profile_id").references("id").inTable("profiles");
+  basicDefault(table, knex);
 };
 
 /**
@@ -99,8 +91,6 @@ exports.down = function (knex) {
     .dropTable("lots")
     .dropTable("projects")
     .dropTable("projects_profiles")
-    .dropTable("tenant_profiles")
-    .dropTable("roles")
     .dropTable("profiles")
     .dropTable("tenants");
 };
