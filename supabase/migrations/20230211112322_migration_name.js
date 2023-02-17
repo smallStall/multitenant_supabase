@@ -24,7 +24,7 @@ exports.up = function (knex) {
     })
     .createTable("projects_profiles", (table) => {
       table.uuid("id").notNullable.primary();
-      table.uuid("");
+      table.uuid("string");
     })
     .createTable("lots", (table) => {
       table.uuid("id").primary();
