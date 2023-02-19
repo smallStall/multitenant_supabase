@@ -4,7 +4,11 @@
   "description": "",
   "main": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db": "npm run db:supabase && npm run db:migrate && npm run db:seed",
+    "db:seed": "npx knex seed:run",
+    "db:migrate": "npx knex migrate:up",
+    "db:supabase": "supabase start"
   },
   "author": "",
   "license": "ISC",

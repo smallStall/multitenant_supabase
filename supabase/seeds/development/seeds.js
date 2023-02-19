@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const uuid1 = crypto.randomUUID();
+const uuid2 = crypto.randomUUID();
 
 /**
  * @param { import("knex").Knex } knex
@@ -12,12 +13,13 @@ exports.seed = async function (knex) {
   //inserts seed entries
   await knex("auth.users").insert({
     id: uuid1,
+    email: "nohohohoo@gmail.como",
+    confirmed_at: new Date(),
     raw_user_meta_data: JSON.stringify({ name: "hoge" }),
   });
-  await knex("lots").insert({
-    id: uuid1,
-    lot_number: "lot_number",
-    project_id: uuid1,
+  await knex("tenants").insert({
+    id: uuid2,
+    tenant_name: "hoge",
     production_date: new Date(),
     standard_lot_number: "standard_lot_number",
     profile_id: uuid1,
