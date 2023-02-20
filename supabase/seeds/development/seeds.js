@@ -14,7 +14,6 @@ exports.seed = async function (knex) {
   await knex("auth.users").insert({
     id: uuid1,
     email: "nohohohoo@gmail.como",
-    confirmed_at: new Date(),
     raw_user_meta_data: JSON.stringify({ name: "hoge" }),
   });
   await knex("tenants").insert({

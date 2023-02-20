@@ -38,7 +38,7 @@ exports.up = function (knex) {
       basicDefault(table, knex);
     })
     .createTable("profiles", (table) => {
-      table.uuid("id").primary();
+      table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
       table.uuid("user_id").references("id").inTable("auth.users");
       table.string("user_name", 18).notNullable();
       table.enu("role", ["manager", "general", "beginer"]).defaultTo("beginer");

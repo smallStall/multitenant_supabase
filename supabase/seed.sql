@@ -9,8 +9,8 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.tenants (id, name)
-  values (new.id, new.raw_user_meta_data ->>'name');
+  insert into public.profiles (user_id, user_name, role)
+  values (new.id, new.raw_user_meta_data ->>'name', 'manager');
   return new;
 end;
 $$;
