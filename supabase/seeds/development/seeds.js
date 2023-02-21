@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 const uuid1 = crypto.randomUUID();
-const uuid2 = crypto.randomUUID();
 
 /**
  * @param { import("knex").Knex } knex
@@ -8,21 +7,26 @@ const uuid2 = crypto.randomUUID();
  */
 exports.seed = async function (knex) {
   // Deletes ALL existing entries
+  await knex("todos").del();
+  await knex("profiles").del();
   await knex("auth.users").del();
-
+  await knex("tenants").del();
   //inserts seed entries
   await knex("auth.users").insert({
     id: uuid1,
     email: "nohohohoo@gmail.como",
-    raw_user_meta_data: JSON.stringify({ name: "hoge" }),
+    raw_user_meta_data: JSON.stringify({
+      user_name: "hoge",
+      tenant_name: "nohoho",
+    }),
   });
-  await knex("tenants").insert({
-    id: uuid2,
-    tenant_name: "hoge",
-    production_date: new Date(),
-    standard_lot_number: "standard_lot_number",
-    profile_id: uuid1,
-    lot_objective: "lot_objective",
-    details: "details",
-  });
+  const profs = await knex("profiles").select("*");
+
+  for (let i = 0; i < profs.length; i++) {
+    await knex("todos").insert({
+      tenant_id: profs[i].tenant_id,
+      profile_id: profs[i].id,
+      name: "123213",
+    });
+  }
 };

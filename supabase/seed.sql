@@ -3,14 +3,18 @@ alter default privileges in schema public revoke all on tables from anon;
 alter default privileges in schema public revoke all on functions from anon;
 alter default privileges in schema public revoke all on sequences from anon;
 
-create function public.handle_new_user()
+create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
+declare
+  uuid_id uuid :=gen_random_uuid();
 begin
-  insert into public.profiles (user_id, user_name, role)
-  values (new.id, new.raw_user_meta_data ->>'name', 'manager');
+  insert into public.tenants (id, tenant_name) 
+  values (uuid_id,  new.raw_user_meta_data ->>'tenant_name');
+  insert into public.profiles (tenant_id, user_id, user_name, role)
+  values (uuid_id, new.id, new.raw_user_meta_data ->>'user_name', 'manager'); 
   return new;
 end;
 $$;
@@ -27,4 +31,8 @@ create or replace function set_tenant_id (tenant_id uuid)
   select set_config('app.current_tenant', tenant_id);
   end;
   $$ language plpgsql;
+
+
+
+
 
