@@ -1,12 +1,8 @@
-const crypto = require("crypto");
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
+import { UUID } from "uuidjs";
+import knex from "knex";
 
-const makeMockUser = (index) => {};
-
-exports.seed = async function (knex) {
+//https://dev.to/asteinarson/typescript-node-js-importing-knex-into-es6-module-1poc
+exports.seed = async function () {
   // Deletes ALL existing entries
   await knex("todos").del();
   await knex("profiles").del();
@@ -14,7 +10,7 @@ exports.seed = async function (knex) {
   await knex("tenants").del();
   //inserts seed entries
   await knex("auth.users").insert({
-    id: crypto.randomUUID(),
+    id: UUID.genV4(),
     email: "nohohohoo@gmail.como",
     raw_user_meta_data: JSON.stringify({
       user_name: "nohoho",
@@ -22,7 +18,7 @@ exports.seed = async function (knex) {
     }),
   });
   await knex("auth.users").insert({
-    id: crypto.randomUUID(),
+    id: UUID.genV4(),
     email: "hogehoge@gmail.como",
     raw_user_meta_data: JSON.stringify({
       user_name: "hoge",
