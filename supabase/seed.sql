@@ -11,11 +11,17 @@ as $$
 declare
   uuid_id uuid :=gen_random_uuid();
 begin
-  insert into public.tenants (id, tenant_name) 
-  values (uuid_id,  new.raw_user_meta_data ->>'tenant_name');
-  insert into public.profiles (tenant_id, user_id, user_name, role)
-  values (uuid_id, new.id, new.raw_user_meta_data ->>'user_name', 'manager'); 
-  return new;
+  if new.raw_user_meta_data ->>'tenant_id' is null then
+    insert into public.tenants (id, tenant_name) 
+    values (uuid_id,  new.raw_user_meta_data ->>'tenant_name');
+    insert into public.profiles (tenant_id, user_id, user_name, role)
+    values (uuid_id, new.id, new.raw_user_meta_data ->>'user_name', 'manager'); 
+    return new;
+  else
+    insert into public.profiles (tenant_id, user_id, user_name, role)
+    values (new.raw_user_meta_data ->>'tenant_id', new.id, new.raw_user_meta_data ->>'user_name', 'general'); 
+    return new;
+  end if;
 end;
 $$;
 

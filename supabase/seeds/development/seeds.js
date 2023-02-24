@@ -15,9 +15,17 @@ exports.seed = async function (knex) {
   //inserts seed entries
   await knex("auth.users").insert({
     id: crypto.randomUUID(),
-    email: "nohohohoo@gmail.como",
+    email: "nohoho@gmail.como",
     raw_user_meta_data: JSON.stringify({
       user_name: "nohoho",
+      tenant_name: "tenant_nohoho",
+    }),
+  });
+  await knex("auth.users").insert({
+    id: crypto.randomUUID(),
+    email: "arururu@gmail.como",
+    raw_user_meta_data: JSON.stringify({
+      user_name: "aruru",
       tenant_name: "tenant_nohoho",
     }),
   });
@@ -33,7 +41,7 @@ exports.seed = async function (knex) {
   const profs = await knex("profiles").select("*");
 
   for (let i = 0; i < profs.length; i++) {
-    for (let j = 0; j < 10; j++) {
+    for (let j = 0; j < 2; j++) {
       await knex("todos").insert({
         tenant_id: profs[i].tenant_id,
         profile_id: profs[i].id,

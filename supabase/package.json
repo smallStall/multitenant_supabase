@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "run": "npm run db:supabase && npm run db:migrate && npm run db:seed",
-    "reset": "supabase db reset && npm run db:migrate && npm run db:seed",
+    "reset": "npx supabase db reset && npm run db:migrate && npm run db:seed",
     "db:seed": "npx knex seed:run",
     "db:migrate": "npx knex migrate:up",
     "db:start": "supabase start",
@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "knex": "^2.4.2",
+    "knex-cli": "^1.0.2",
     "pg": "^8.9.0"
   }
 }
