@@ -3,6 +3,9 @@ alter default privileges in schema public revoke all on tables from anon;
 alter default privileges in schema public revoke all on functions from anon;
 alter default privileges in schema public revoke all on sequences from anon;
 
+
+-- ユーザー登録時にtenant_idがあればそのテナントの一般ユーザーだとみなして登録する
+-- tenant_idがなければテナントの管理ユーザーだとみなして登録する
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -19,11 +22,12 @@ begin
     return new;
   else
     insert into public.profiles (tenant_id, user_id, user_name, role)
-    values (new.raw_user_meta_data ->>'tenant_id', new.id, new.raw_user_meta_data ->>'user_name', 'general'); 
+    values (cast(new.raw_user_meta_data ->>'tenant_id' as uuid), new.id, new.raw_user_meta_data ->>'user_name', 'general'); 
     return new;
   end if;
 end;
 $$;
+
 
 -- trigger the function every time a user is created
 create trigger on_auth_user_created
@@ -37,8 +41,3 @@ create or replace function set_tenant_id (tenant_id uuid)
   select set_config('app.current_tenant', tenant_id);
   end;
   $$ language plpgsql;
-
-
-
-
-
