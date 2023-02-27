@@ -14,16 +14,15 @@ as $$
 declare
   uuid_id uuid :=gen_random_uuid();
 begin
-  if new.raw_user_meta_data ->>'tenant_id' is null then
+  if new.raw_user_meta_data ->>'tenant_id' is null then -- 管理ユーザー登録の場合
     insert into public.tenants (id, tenant_name) 
     values (uuid_id,  new.raw_user_meta_data ->>'tenant_name');
     insert into public.profiles (tenant_id, user_id, user_name, role)
     values (uuid_id, new.id, new.raw_user_meta_data ->>'user_name', 'manager'); 
     return new;
-  else
+  else -- 一般ユーザー登録の場合
     insert into public.profiles (tenant_id, user_id, user_name, role)
-    values (cast(new.raw_user_meta_data ->>'tenant_id' as uuid), new.id, new.raw_user_meta_data ->>'user_name', 'general'); 
-    return new;
+    values (cast(new.raw_user_meta_data ->>'tenant_id' as uuid), new.id, new.raw_user_meta_data ->>'user_name', 'general');
   end if;
 end;
 $$;
@@ -41,3 +40,8 @@ create or replace function set_tenant_id (tenant_id uuid)
   select set_config('app.current_tenant', tenant_id);
   end;
   $$ language plpgsql;
+
+
+--    update auth.users
+--    set raw_user_meta_data = to_jsonb(jsonb_build_object('role', 'manager'))
+--    where id = new.id;

@@ -49,9 +49,7 @@ exports.seed = async function (knex) {
     }),
   });
 
-  const nohoho = await knex("profiles")
-    .select("*")
-    .where({ user_name: "nohoho" });
+  const nohoho = await knex("profiles").select("*").where({ user_name: "nohoho" });
   await knex("auth.users").insert({
     id: crypto.randomUUID(),
     email: "momomo@gmail.como",
@@ -67,12 +65,10 @@ exports.seed = async function (knex) {
   const profs = await knex("profiles").select("*");
 
   for (let i = 0; i < profs.length; i++) {
-    for (let j = 0; j < 2; j++) {
-      await knex("todos").insert({
-        tenant_id: profs[i].tenant_id,
-        profile_id: profs[i].id,
-        todo_name: profs[i].user_name + "さんのtodo" + i,
-      });
-    }
+    await knex("todos").insert({
+      tenant_id: profs[i].tenant_id,
+      profile_id: profs[i].id,
+      todo_name: profs[i].user_name + "さんのtodo",
+    });
   }
 };
