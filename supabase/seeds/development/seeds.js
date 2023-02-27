@@ -6,7 +6,9 @@ const crypto = require("crypto");
 
 const makeAuthUser = async (name, knex, tenant_id) => {
   //ユーザーログイン用の暗号化されたパスワードを取得
-  const crypts = await knex.raw("SELECT crypt('password', gen_salt('bf', 4));");
+  const crypts = await knex.raw(
+    "SELECT crypt('pass!12word', gen_salt('bf', 4));"
+  );
   //https://github.com/supabase/supabase/discussions/9251
   await knex("auth.users").insert({
     id: crypto.randomUUID(),
