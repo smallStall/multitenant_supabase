@@ -4,19 +4,14 @@ const crypto = require("crypto");
  * @returns { Promise<void> }
  */
 
-exports.seed = async function (knex) {
-  // Deletes ALL existing entries
-  await knex("todos").del();
-  await knex("profiles").del();
-  await knex("auth.users").del();
-  await knex("tenants").del();
+const makeAuthUser = async (name, knex, tenant_id) => {
   //ユーザーログイン用の暗号化されたパスワードを取得
   const crypts = await knex.raw("SELECT crypt('password', gen_salt('bf', 4));");
   //https://github.com/supabase/supabase/discussions/9251
   await knex("auth.users").insert({
     id: crypto.randomUUID(),
     instance_id: "00000000-0000-0000-0000-000000000000",
-    email: "nohoho@gmail.como",
+    email: name + "@mail.como",
     encrypted_password: crypts.rows[0].crypt,
     role: "authenticated",
     aud: "authenticated",
@@ -31,37 +26,26 @@ exports.seed = async function (knex) {
       provider: "email",
       providers: ["email"],
     }),
-
     raw_user_meta_data: JSON.stringify({
-      user_name: "nohoho",
-      tenant_name: "tenant_nohoho",
+      user_name: name,
+      tenant_name: "tenant_" + name,
+      tenant_id: tenant_id,
     }),
   });
-  await knex("auth.users").insert({
-    id: crypto.randomUUID(),
-    email: "hogehoge@gmail.como",
-    encrypted_password: crypts.rows[0].crypt,
-    role: "authenticated",
-    email_confirmed_at: knex.fn.now(),
-    raw_user_meta_data: JSON.stringify({
-      user_name: "hoge",
-      tenant_name: "nohoho",
-    }),
-  });
+};
 
-  const nohoho = await knex("profiles").select("*").where({ user_name: "nohoho" });
-  await knex("auth.users").insert({
-    id: crypto.randomUUID(),
-    email: "momomo@gmail.como",
-    encrypted_password: crypts.rows[0].crypt,
-    role: "authenticated",
-    email_confirmed_at: knex.fn.now(),
-    raw_user_meta_data: JSON.stringify({
-      user_name: "momomo",
-      tenant_id: nohoho[0].tenant_id,
-    }),
-  });
-
+exports.seed = async function (knex) {
+  // Deletes ALL existing entries
+  await knex("todos").del();
+  await knex("profiles").del();
+  await knex("auth.users").del();
+  await knex("tenants").del();
+  await makeAuthUser("nohoho", knex);
+  await makeAuthUser("hogehoge", knex);
+  const nohoho = await knex("profiles")
+    .select("*")
+    .where({ user_name: "nohoho" });
+  await makeAuthUser("momomo", knex, nohoho[0].tenant_id); //momomoはnohohoと同じテナント
   const profs = await knex("profiles").select("*");
 
   for (let i = 0; i < profs.length; i++) {

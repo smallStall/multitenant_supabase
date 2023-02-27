@@ -10,7 +10,9 @@ const basicDefault = (table) => {
 
 const tenantSecurityPolicy = (tableName, isTenantsTable) => `
 CREATE POLICY tenant_policy_${tableName} ON ${tableName}
-USING (${isTenantsTable ? "id" : "tenant_id"} = current_setting('tenant_id')::uuid)
+USING (${
+  isTenantsTable ? "id" : "tenant_id"
+} = current_setting('app.tenant')::uuid)
 `;
 
 const enableRLS = (tableName) => `
@@ -37,9 +39,16 @@ exports.up = function (knex) {
     })
     .createTable("profiles", (table) => {
       table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
-      table.uuid("user_id").notNullable().references("id").inTable("auth.users");
+      table
+        .uuid("user_id")
+        .notNullable()
+        .references("id")
+        .inTable("auth.users");
       table.string("user_name", 18).notNullable();
-      table.enu("role", ["manager", "general", "beginer"]).notNullable().defaultTo("beginer");
+      table
+        .enu("role", ["manager", "general", "beginer"])
+        .notNullable()
+        .defaultTo("beginer");
       table.uuid("tenant_id").notNullable().references("id").inTable("tenants");
       basicDefault(table, knex);
     })
@@ -47,7 +56,11 @@ exports.up = function (knex) {
       table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
       table.string("todo_name", 24).notNullable();
       table.boolean("is_done").notNullable().defaultTo(false);
-      table.uuid("profile_id").notNullable().references("id").inTable("profiles");
+      table
+        .uuid("profile_id")
+        .notNullable()
+        .references("id")
+        .inTable("profiles");
       table.uuid("tenant_id").notNullable().references("id").inTable("tenants");
       basicDefault(table, knex);
     })
@@ -68,7 +81,10 @@ const tenantDefault = (table, knex) => {
  */
 
 exports.down = function (knex) {
-  return knex.schema.dropTable("todos").dropTable("profiles").dropTable("tenants");
+  return knex.schema
+    .dropTable("todos")
+    .dropTable("profiles")
+    .dropTable("tenants");
 };
 
 /*
