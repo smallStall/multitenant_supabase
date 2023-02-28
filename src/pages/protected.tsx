@@ -1,13 +1,11 @@
 // pages/protected-page.js
-import {
-  createServerSupabaseClient,
-  User,
-} from "@supabase/auth-helpers-nextjs";
+import { createServerSupabaseClient, User } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext } from "next";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { Todos } from "@/types/table";
+import { ProfilesTodos } from "@/types/table";
+
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabase = createServerSupabaseClient(ctx);
   const {
@@ -21,26 +19,47 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
         permanent: false,
       },
     };
+  const user = await supabase.auth.getUser();
+  if (!user) return;
+  const { error: setTenantError } = await supabase.rpc("set_tenant_id", {
+    tenant_id: user.data.user?.user_metadata.tenant_id,
+  });
+  if (setTenantError)
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
 
-  const { data, error } = await supabase
+  const { data } = await supabase.from("profiles").select(`user_name, todos (todo_name)`);
+  const name = await supabase
     .from("profiles")
-    .select(`user_name, todos (todo_name)`);
-  console.error(error);
+    .select(`user_name`)
+    .eq(`user_id`, user.data.user?.id)
+    .single();
+
+  if (!name.data)
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
   return {
     props: {
-      initialSession: session,
-      user: session.user,
+      userName: name.data.user_name,
       data: data,
     },
   };
 };
 
 export default function Protected({
-  user,
+  userName,
   data,
 }: {
-  user: User;
-  data: UserTodo[] | null;
+  userName: string;
+  data: ProfilesTodos[] | null;
 }) {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
@@ -49,19 +68,15 @@ export default function Protected({
       <p>
         [<Link href="/">Home</Link>]
       </p>
-      <p>ようこそ{user.user_metadata.name}さん</p>
+      <p>ようこそ{userName}さん</p>
       {data ? (
         data.map((user, index) => {
           return (
             <div key={"div" + index}>
-              <p key={"p" + index}>{`${user.user_name}さんのtodo`}</p>
+              <p key={"p" + index}>{`${user.user_name}さんのTodoは次の通りです`}</p>
               <ul key={"ul" + index}>
-                {user.todos.map((todo: Todos) => {
-                  return (
-                    <li
-                      key={"todo" + todo.id}
-                    >{`タイトル:${todo.todo_name}`}</li>
-                  );
+                {user.todos.map((todo) => {
+                  return <li key={"todo" + todo.id}>{`タイトル:${todo.todo_name}`}</li>;
                 })}
               </ul>
             </div>
@@ -74,8 +89,7 @@ export default function Protected({
         onClick={async () => {
           await supabaseClient.auth.signOut();
           router.push("/");
-        }}
-      >
+        }}>
         Logout
       </button>
     </>
