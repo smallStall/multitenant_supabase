@@ -69,12 +69,6 @@ exports.up = function (knex) {
     .then(() => enableTenantRLS("todos", knex));
 };
 
-const tenantDefault = (table, knex) => {
-  table.uuid("tenant_id").references("id").inTable("tenants");
-  table.uuid("profile_id").references("id").inTable("profiles");
-  basicDefault(table, knex);
-};
-
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
