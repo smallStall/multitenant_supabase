@@ -1,13 +1,17 @@
 // pages/protected-page.js
-import { createServerSupabaseClient, User } from "@supabase/auth-helpers-nextjs";
+import {
+  createServerSupabaseClient,
+  User,
+} from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext } from "next";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import type { Database } from "@/types/supabase";
 import { ProfilesTodos } from "@/types/table";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabase = createServerSupabaseClient<Database>(ctx);
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -32,7 +36,9 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       },
     };
 
-  const { data } = await supabase.from("profiles").select(`user_name, todos (todo_name)`);
+  const { data } = await supabase
+    .from("profiles")
+    .select(`user_name, todos (todo_name)`);
   const name = await supabase
     .from("profiles")
     .select(`user_name`)
@@ -73,10 +79,16 @@ export default function Protected({
         data.map((user, index) => {
           return (
             <div key={"div" + index}>
-              <p key={"p" + index}>{`${user.user_name}さんのTodoは次の通りです`}</p>
+              <p
+                key={"p" + index}
+              >{`${user.user_name}さんのTodoは次の通りです`}</p>
               <ul key={"ul" + index}>
                 {user.todos.map((todo) => {
-                  return <li key={"todo" + todo.id}>{`タイトル:${todo.todo_name}`}</li>;
+                  return (
+                    <li
+                      key={"todo" + todo.id}
+                    >{`タイトル:${todo.todo_name}`}</li>
+                  );
                 })}
               </ul>
             </div>
@@ -89,7 +101,8 @@ export default function Protected({
         onClick={async () => {
           await supabaseClient.auth.signOut();
           router.push("/");
-        }}>
+        }}
+      >
         Logout
       </button>
     </>
